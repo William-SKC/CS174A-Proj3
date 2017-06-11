@@ -149,31 +149,30 @@ Declare_Any_Class( "Ray_Tracer",
             var light_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null };
             for(let b1 of this.balls) {
               b1.intersect(light_ray, light_intersection, 0.0001);
-              if(!light_intersection.ball){
-                //no intersections between P and the light sources
-                var L = normalize(light_dir, true);
-                var N = closest_intersection.normal;
-                var R = subtract(scale_vec(2*dot(N, L), N), L);
-                var V = normalize(ray.dir, true);
-                var light_color = mult_3_coeffs(closest_intersection.ball.color, vec3(l.color[0], l.color[1], l.color[2]));
+            }
+            if(!light_intersection.ball){
+              //no intersections between P and the light sources
+              var L = normalize(light_dir, true);
+              var N = closest_intersection.normal;
+              var R = subtract(scale_vec(2*dot(N, L), N), L);
+              var V = normalize(ray.dir, true);
+              var light_color = mult_3_coeffs(closest_intersection.ball.color, vec3(l.color[0], l.color[1], l.color[2]));
 
-                //var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
-                
+              //var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
 
-                //diffuse
-                var light_diffuse = scale_vec(closest_intersection.ball.k_d*Math.max(0, dot(N, L)), light_color);
-                var diffuse_color = vec3(light_diffuse[0], light_diffuse[1], light_diffuse[2]);
+              //diffuse
+              var light_diffuse = scale_vec(closest_intersection.ball.k_d*Math.max(0, dot(N, L)), light_color);
+              var diffuse_color = vec3(light_diffuse[0], light_diffuse[1], light_diffuse[2]);
 
-                //specular
-                var light_specular = scale_vec(closest_intersection.ball.k_s*Math.pow(Math.max(0, dot(R, V)), closest_intersection.ball.n), light_color);
-                var specular_color = vec3(light_specular[0], light_specular[1], light_specular[2]);
+              //specular
+              var light_specular = scale_vec(closest_intersection.ball.k_s*Math.pow(Math.max(0, dot(R, V)), closest_intersection.ball.n), light_color);
+              var specular_color = vec3(light_specular[0], light_specular[1], light_specular[2]);
+              //throw specular_color
 
-                //throw specular_color
-
-                color_loc = add(color_loc, add(diffuse_color, specular_color));
+              color_loc = add(color_loc, add(diffuse_color, specular_color));
               }
             }
-          } 
+
           //return Color(1, 1, 1, 1);
           //color_loc = normalize(color_loc, false);
           //throw color_loc
