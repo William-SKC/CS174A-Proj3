@@ -18,10 +18,11 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
   //        value along the ray, and a normal), updates it if needed, and returns it.  Only counts intersections that are at least a given distance ahead along the ray.
   //        Tip:  Once intersect() is done, call it in trace() as you loop through all the spheres until you've found the ray's nearest available intersection.  Simply
   //        return a dummy color if the intersection tests positiv.  This will show the spheres' outlines, giving early proof that you did intersect() correctly.
+        
         var m_inv = identity();
 
         m_inv = mult(m_inv, scale( 1/this.size[0], 1/this.size[1], 1/this.size[2] ) );
-        m_inv= mult(m_inv, translation( -this.position[0], -this.position[1], this.position[2] ) );
+        m_inv= mult(m_inv, translation( -this.position[0], -this.position[1], -this.position[2] ) );
         var S = mult_vec(m_inv, ray.origin);
         var c = mult_vec(m_inv, ray.dir);
         var A = dot(c, c);
@@ -30,23 +31,27 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
 
         
         if (B*B-A*C >= 0) {
+          //throw 'it!!'
         //two points of intersections
           var t1 = -B+Math.sqrt(B*B-A*C)/A;
           var t2 = -B-Math.sqrt(B*B-A*C)/A;
+
           if (t1 < minimum_dist || t1 > t2){ 
             t1=t2;
           }
+
           if (t1 < minimum_dist || t1 >= existing_intersection.distance){ 
             return existing_intersection;
           } 
+
+
           existing_intersection.ball = this;
           existing_intersection.distance = t1;
           var point_intersect = add(S, scale_vec(t1,c));
-          throw point_intersect;
           var temp = vec4(point_intersect[0], point_intersect[1], point_intersect[2], 0);
           existing_intersection.normal = mult_vec(transpose(inverse(this.model_transform)), normalize(temp, true));
-        }
-
+          }
+        
         return existing_intersection;
 
       }
@@ -125,9 +130,9 @@ Declare_Any_Class( "Ray_Tracer",
         for(let b of this.balls) {
          //throw "here1"
          closest_intersection = b.intersect(ray, closest_intersection, 0.0001);
+         //throw closest_intersection
          if (closest_intersection.ball != null){
-            throw "here"
-            return  this.balls[i].color;
+            return  b.color;
          } 
         }
 
