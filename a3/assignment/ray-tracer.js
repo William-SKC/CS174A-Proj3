@@ -140,8 +140,8 @@ Declare_Any_Class( "Ray_Tracer",
           var color_loc = vec3(0, 0, 0);
           //shadow light
           for(let l of this.lights) {
-            light_origin = l.position;
-            light_dir = vec4(light_origin[0]-P[0], light_origin[1]-P[1], light_origin[2]-P[2], 0);
+            var light_origin = l.position;
+            var light_dir = vec4(light_origin[0]-P[0], light_origin[1]-P[1], light_origin[2]-P[2], 0);
             var light_ray = { origin: light_origin, dir: light_dir };  
             var light_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null };
             for(let b1 of this.balls) {
@@ -151,9 +151,9 @@ Declare_Any_Class( "Ray_Tracer",
                 var L = normalize(light_dir, true);
                 var N = closest_intersection.normal;
                 var R = subtract(scale_vec(2*dot(N, L), N), L);
-                //var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
-                var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color)
-
+                var V = normalize(ray.dir, true);
+                var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
+                //var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color);
                 var ambient_color = vec3(light_ambient[0], light_ambient[1], light_ambient[2]);
 
 
@@ -161,14 +161,19 @@ Declare_Any_Class( "Ray_Tracer",
                 var light_diffuse = scale_vec(closest_intersection.ball.k_d*Math.max(0, dot(N, L)), l.color);
                 var diffuse_color = vec3(light_diffuse[0], light_diffuse[1], light_diffuse[2]);
 
+
+                //specular
+                var light_specular = scale_vec(closest_intersection.ball.k_s*Math.pow(Math.max(0, dot(R, V)), closest_intersection.ball.n), l.color);
+                var specular_color = vec3(light_specular[0], light_specular[1], light_specular[2]);
+
                 //var color = add(diffuse_color,ambient_color);
                 //throw add(ambient_color, light_diffuse)
-                color_loc = add(color_loc, add(ambient_color, diffuse_color));
+                color_loc = add(color_loc, add(add(ambient_color, diffuse_color), specular_color));
                 //return ambient_color;
               }
             }
           } 
-          return color_loc;
+          return Color(color_loc[0], color_loc[1], color_loc[2], 1);
         }
         else return this.color_missed_ray( ray );
 
