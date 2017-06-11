@@ -43,7 +43,7 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
           existing_intersection.distance = t1;
           var point_intersect = add(S, scale_vec(t1,c));
           throw point_intersect;
-          var temp = vec3(point_intersect[0], point_intersect[1], point_intersect[2], 0);
+          var temp = vec4(point_intersect[0], point_intersect[1], point_intersect[2], 0);
           existing_intersection.normal = mult_vec(transpose(inverse(this.model_transform)), normalize(temp, true));
         }
 
@@ -120,13 +120,13 @@ Declare_Any_Class( "Ray_Tracer",
 
         
         if( length( color_remaining ) < .3 )    return Color( 0, 0, 0, 1 );  // Each recursion, check if there's any remaining potential for the pixel to be brightened.
-
         
         var closest_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null }    // An empty intersection object
-        
-        for(var i=0; i < this.balls.length; i++) {
-         closest_intersection = this.balls[i].intersect(ray, closest_intersection, 0.0001);
+        for(let b of this.balls) {
+         //throw "here1"
+         closest_intersection = b.intersect(ray, closest_intersection, 0.0001);
          if (closest_intersection.ball != null){
+            throw "here"
             return  this.balls[i].color;
          } 
         }
