@@ -139,6 +139,9 @@ Declare_Any_Class( "Ray_Tracer",
           var P = add(ray.origin, scale_vec(closest_intersection.distance, ray.dir));
           var color_loc = vec3(0, 0, 0);
           //shadow light
+
+          var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color);
+          var ambient_color = vec3(light_ambient[0], light_ambient[1], light_ambient[2]);
           for(let l of this.lights) {
             var light_origin = l.position;
             var light_dir = vec4(light_origin[0]-P[0], light_origin[1]-P[1], light_origin[2]-P[2], 0);
@@ -155,14 +158,11 @@ Declare_Any_Class( "Ray_Tracer",
                 var light_color = mult_3_coeffs(closest_intersection.ball.color, vec3(l.color[0], l.color[1], l.color[2]));
 
                 //var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
-                var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color);
-                var ambient_color = vec3(light_ambient[0], light_ambient[1], light_ambient[2]);
-                //throw ambient_color
+                
 
                 //diffuse
                 var light_diffuse = scale_vec(closest_intersection.ball.k_d*Math.max(0, dot(N, L)), light_color);
                 var diffuse_color = vec3(light_diffuse[0], light_diffuse[1], light_diffuse[2]);
-                //throw diffuse_color
 
                 //specular
                 var light_specular = scale_vec(closest_intersection.ball.k_s*Math.pow(Math.max(0, dot(R, V)), closest_intersection.ball.n), light_color);
@@ -170,14 +170,14 @@ Declare_Any_Class( "Ray_Tracer",
 
                 //throw specular_color
 
-                color_loc = add(color_loc, add(add(ambient_color, diffuse_color), specular_color));
-                //throw color_loc
+                color_loc = add(color_loc, add(diffuse_color, specular_color));
               }
             }
           } 
           //return Color(1, 1, 1, 1);
           //color_loc = normalize(color_loc, false);
           //throw color_loc
+          color_loc = add(color_loc,ambient_color);
           return Color(color_loc[0], color_loc[1], color_loc[2], 1);
         }
         else return this.color_missed_ray( ray );
