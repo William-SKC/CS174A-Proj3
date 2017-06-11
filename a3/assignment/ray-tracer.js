@@ -19,23 +19,25 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
   //        Tip:  Once intersect() is done, call it in trace() as you loop through all the spheres until you've found the ray's nearest available intersection.  Simply
   //        return a dummy color if the intersection tests positiv.  This will show the spheres' outlines, giving early proof that you did intersect() correctly.
         
-        var m_inv = identity();
-
-        m_inv = mult(m_inv, scale( 1/this.size[0], 1/this.size[1], 1/this.size[2] ) );
-        m_inv= mult(m_inv, translation( -this.position[0], -this.position[1], -this.position[2] ) );
-        var S = mult_vec(m_inv, ray.origin);
-        var c = mult_vec(m_inv, ray.dir);
+        //var m_inv = identity();
+		    var m_inv = { origin: mult_vec(inverse(this.model_transform), ray.origin), dir: mult_vec(inverse(this.model_transform), ray.dir) };
+        //m_inv = mult(m_inv, scale( 1/this.size[0], 1/this.size[1], 1/this.size[2] ) );
+        //m_inv= mult(m_inv, translation( -this.position[0], -this.position[1], -this.position[2] ) );
+        var S = m_inv.origin;
+        var c = m_inv.dir;
         var A = dot(c, c);
         var B = dot(S, c);
         var C = dot(S, S)-2;
 
         
         if (B*B-A*C >= 0) {
-          //throw 'it!!'
         //two points of intersections
-          var t1 = -B+Math.sqrt(B*B-A*C)/A;
-          var t2 = -B-Math.sqrt(B*B-A*C)/A;
-
+          var t1 = -B/A+Math.sqrt(B*B-A*C)/A;
+          var t2 = -B/A-Math.sqrt(B*B-A*C)/A;
+		  
+		  //t1 = Math.abs(Math.sqrt(A) * t1);
+		  //t2 = Math.abs(Math.sqrt(A) * t2);
+		  
           if (t1 < minimum_dist || t1 > t2){ 
             t1=t2;
           }
@@ -128,18 +130,14 @@ Declare_Any_Class( "Ray_Tracer",
         
         var closest_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null }    // An empty intersection object
         for(let b of this.balls) {
-         //throw "here1"
-         closest_intersection = b.intersect(ray, closest_intersection, 0.0001);
-         //throw closest_intersection
-         if (closest_intersection.ball != null){
-            return  b.color;
-         } 
+          b.intersect(ray, closest_intersection, 0.0001);
         }
 
-
-        if( !closest_intersection.ball ) return this.color_missed_ray( ray ); 
+   
+        if( !closest_intersection.ball ) return this.color_missed_ray( ray );
+		    else return closest_intersection.ball.color;
           
-        return Color( 0, 0, 0, 1 );
+        
       },
     'parse_line'( tokens )            // Load the lines from the textbox into variables
       { for( let i = 1; i < tokens.length; i++ ) tokens[i] = Number.parseFloat( tokens[i] );
