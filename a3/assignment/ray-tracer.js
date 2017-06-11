@@ -122,10 +122,6 @@ Declare_Any_Class( "Ray_Tracer",
     //        ray or a recursion.  Use the argument light_to_check when a recursive call to trace() is for computing a shadow ray.
 
 
-
-
-
-        
         if( length( color_remaining ) < .3 )    return Color( 0, 0, 0, 1 );  // Each recursion, check if there's any remaining potential for the pixel to be brightened.
         
         var closest_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null }    // An empty intersection object
@@ -133,9 +129,35 @@ Declare_Any_Class( "Ray_Tracer",
           b.intersect(ray, closest_intersection, 0.0001);
         }
 
-   
-        if( !closest_intersection.ball ) return this.color_missed_ray( ray );
-		    else return closest_intersection.ball.color;
+        if(closest_intersection.ball ){
+          var P = ray.origin + closest_intersection.distance*ray.dir;
+          color_loc = color(0,0,0);
+
+          for(let L of this.lights) {
+            light_origin = L.position
+            light_dir = normalized(vec4(light_origin[0]-P[0], light_origin[1]-P[1], light_origin[2]-P[2], 0), true);
+            var light_ray = { origin: light_origin, dir: light_dir };  
+            var light_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null }
+            for(let b of this.balls) {
+              b.intersect(light_ray, light_intersection, 0.0001);
+              if(!light_intersection.ball){
+                color_loc += L.color;
+              }
+            }
+          }
+
+
+
+         
+        }
+
+
+
+
+        
+		    else  return this.color_missed_ray( ray );
+
+
           
         
       },
