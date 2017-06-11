@@ -19,9 +19,6 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
   //        Tip:  Once intersect() is done, call it in trace() as you loop through all the spheres until you've found the ray's nearest available intersection.  Simply
   //        return a dummy color if the intersection tests positiv.  This will show the spheres' outlines, giving early proof that you did intersect() correctly.
         
-
-
-
 		    var ray_inv = { origin: mult_vec(inverse(this.model_transform), ray.origin), dir: mult_vec(inverse(this.model_transform), ray.dir) };
         var S = ray_inv.origin;
         var c = ray_inv.dir;
@@ -139,8 +136,8 @@ Declare_Any_Class( "Ray_Tracer",
         
         if(closest_intersection.ball){
           //throw closest_intersection.normal;
-          var P = add(ray.origin, scale_vec(closest_intersection.distance,ray.dir));
-          color_loc = Color(0, 0, 0, 1);
+          var P = add(ray.origin, scale_vec(closest_intersection.distance, ray.dir));
+          var color_loc = vec3(0, 0, 0);
           //shadow light
           for(let l of this.lights) {
             light_origin = l.position;
@@ -156,21 +153,22 @@ Declare_Any_Class( "Ray_Tracer",
                 var R = subtract(scale_vec(2*dot(N, L), N), L);
                 //var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
                 var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color)
-                var ambient_color = vec4(light_ambient[0], light_ambient[1], light_ambient[2], 1);
+
+                var ambient_color = vec3(light_ambient[0], light_ambient[1], light_ambient[2]);
 
 
                 //diffuse
                 var light_diffuse = scale_vec(closest_intersection.ball.k_d*Math.max(0, dot(N, L)), l.color);
-                var diffuse_color = vec4(light_diffuse[0], light_diffuse[1], light_diffuse[2], 1);
+                var diffuse_color = vec3(light_diffuse[0], light_diffuse[1], light_diffuse[2]);
 
                 //var color = add(diffuse_color,ambient_color);
                 //throw add(ambient_color, light_diffuse)
-                return add(ambient_color, diffuse_color) ;
+                color_loc = add(color_loc, add(ambient_color, diffuse_color));
                 //return ambient_color;
               }
             }
-          }
-
+          } 
+          return color_loc;
         }
         else return this.color_missed_ray( ray );
 
