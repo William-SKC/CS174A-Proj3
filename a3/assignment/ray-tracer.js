@@ -152,27 +152,32 @@ Declare_Any_Class( "Ray_Tracer",
                 var N = closest_intersection.normal;
                 var R = subtract(scale_vec(2*dot(N, L), N), L);
                 var V = normalize(ray.dir, true);
-                var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
-                //var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color);
-                var ambient_color = vec3(light_ambient[0], light_ambient[1], light_ambient[2]);
+                var light_color = mult_3_coeffs(closest_intersection.ball.color, vec3(l.color[0], l.color[1], l.color[2]));
 
+                //var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
+                var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color);
+                var ambient_color = vec3(light_ambient[0], light_ambient[1], light_ambient[2]);
+                //throw ambient_color
 
                 //diffuse
-                var light_diffuse = scale_vec(closest_intersection.ball.k_d*Math.max(0, dot(N, L)), l.color);
+                var light_diffuse = scale_vec(closest_intersection.ball.k_d*Math.max(0, dot(N, L)), light_color);
                 var diffuse_color = vec3(light_diffuse[0], light_diffuse[1], light_diffuse[2]);
-
+                //throw diffuse_color
 
                 //specular
-                var light_specular = scale_vec(closest_intersection.ball.k_s*Math.pow(Math.max(0, dot(R, V)), closest_intersection.ball.n), l.color);
+                var light_specular = scale_vec(closest_intersection.ball.k_s*Math.pow(Math.max(0, dot(R, V)), closest_intersection.ball.n), light_color);
                 var specular_color = vec3(light_specular[0], light_specular[1], light_specular[2]);
 
-                //var color = add(diffuse_color,ambient_color);
-                //throw add(ambient_color, light_diffuse)
+                //throw specular_color
+
                 color_loc = add(color_loc, add(add(ambient_color, diffuse_color), specular_color));
-                //return ambient_color;
+                //throw color_loc
               }
             }
           } 
+          //return Color(1, 1, 1, 1);
+          //color_loc = normalize(color_loc, false);
+          //throw color_loc
           return Color(color_loc[0], color_loc[1], color_loc[2], 1);
         }
         else return this.color_missed_ray( ray );
