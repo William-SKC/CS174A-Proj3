@@ -32,6 +32,10 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
           var t2 = -B/A+Math.sqrt(B*B-A*C)/A;
           var t1 = -B/A-Math.sqrt(B*B-A*C)/A;
 
+          var inside = false;
+          if (add(ray.origin, scale_vec(t1, ray.dir))[2] >= -1)
+            inside = true;
+
           if (t1 < minimum_dist || t1 > t2){ 
             t1=t2;
           }
@@ -44,12 +48,21 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
           existing_intersection.distance = t1;
           var point_intersect = add(S, scale_vec(t1,c));
           
-          var temp = vec4(point_intersect[0], point_intersect[1], point_intersect[2], 0);
-          var temp2 = normalize(mult_vec(transpose(inverse(this.model_transform)), temp), true);
           
-        
-          existing_intersection.normal =  vec4(temp2[0], temp2[1], temp2[2], 0);
+          
+          if(inside){
+            //need to flip normal vector direction 
+            //existing_intersection.normal =  vec4(-temp2[0], -temp2[1], -temp2[2], 0);
+            var temp = vec4(-1*point_intersect[0], -1*point_intersect[1], -1*point_intersect[2], 0);
+            var temp2 = normalize(mult_vec(transpose(inverse(this.model_transform)), temp), true);
+            existing_intersection.normal =  vec4(temp2[0], temp2[1], temp2[2], 0);
           }
+          else{
+            var temp = vec4(point_intersect[0], point_intersect[1], point_intersect[2], 0);
+            var temp2 = normalize(mult_vec(transpose(inverse(this.model_transform)), temp), true);
+            existing_intersection.normal =  vec4(temp2[0], temp2[1], temp2[2], 0);
+          }
+        }
         return existing_intersection;
 
       }
@@ -139,32 +152,30 @@ Declare_Any_Class( "Ray_Tracer",
 
           var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color);
           var ambient_color = vec3(light_ambient[0], light_ambient[1], light_ambient[2]);
+          
+          var N = closest_intersection.normal;
+          var V = normalize(scale_vec(-1, ray.dir), true);
 
           for(let l of this.lights) {
             var light_origin = l.position;
             var light_dir = vec4(light_origin[0]-P[0], light_origin[1]-P[1], light_origin[2]-P[2], 0);
             var light_ray = { origin: P, dir: light_dir };  
             var light_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null };
+            var L = normalize(light_dir, true);
+            var R = normalize(subtract(scale_vec(2*dot(N, L), N), L), true);
+            var light_color = mult_3_coeffs(closest_intersection.ball.color, vec3(l.color[0], l.color[1], l.color[2]));
+
             for(let b1 of this.balls) {
               b1.intersect(light_ray, light_intersection, 0.0001);
             }
                 
 
 
-            if(add(ray.origin, scale_vec(light_intersection.distance, ray.dir)) == light_origin || !light_intersection.ball){
+            if(!light_intersection.ball){
               //no intersections between P and the light sources
-              var L = normalize(light_dir, true);
               
-              /*
-              if(closest_intersection.distance < this.near)
-                var N = scale_vec(-1, closest_intersection.normal);
-              else
-                var N = closest_intersection.normal;
-              */
-              var N = closest_intersection.normal;
-              var R = normalize(subtract(scale_vec(2*dot(N, L), N), L), true);
-              var V = normalize(scale_vec(-1, ray.dir), true);
-              var light_color = mult_3_coeffs(closest_intersection.ball.color, vec3(l.color[0], l.color[1], l.color[2]));
+              
+             
 
               //var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
 
@@ -180,6 +191,17 @@ Declare_Any_Class( "Ray_Tracer",
               }
             }
           color_loc = add(color_loc, ambient_color);
+
+          var reflect_dir = normalize(subtract(scale_vec(2*dot(N, V), N), V), true);
+          var reflect_ray = { origin: P, dir: reflect_dir }; 
+          //var scale_down = scale_vec(closest_intersection.ball.k_r, subtract([1, 1, 1], shadow_light));
+          //var reflect_color = mult_3_coeffs(scale_down, color_remaining);
+
+          var reflect_color_remain = scale_vec(closest_intersection.ball.k_r, color_remaining);
+          var reflect_light = this.trace(reflect_ray, reflect_color_remain, false).slice(0, 3);
+          reflect_light = scale_vec(closest_intersection.ball.k_r, reflect_light);
+
+          color_loc = add(color_loc, reflect_light);
 
           return Color(color_loc[0], color_loc[1], color_loc[2], 1);
         }
