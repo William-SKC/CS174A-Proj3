@@ -141,6 +141,7 @@ Declare_Any_Class( "Ray_Tracer",
         }
 
         /*
+        // for tesing intersect
         if( !closest_intersection.ball ) return this.color_missed_ray( ray );
         else return closest_intersection.ball.color;
         */
@@ -175,10 +176,6 @@ Declare_Any_Class( "Ray_Tracer",
               //no intersections between P and the light sources
               
               
-             
-
-              //var light_ambient = scale_vec(closest_intersection.ball.k_a, this.ambient);
-
               //diffuse
               var light_diffuse = scale_vec(closest_intersection.ball.k_d*Math.max(0, dot(N, L)), light_color);
               var diffuse_color = vec3(light_diffuse[0], light_diffuse[1], light_diffuse[2]);
@@ -192,6 +189,8 @@ Declare_Any_Class( "Ray_Tracer",
             }
           color_loc = add(color_loc, ambient_color);
 
+
+          //reflection
           var reflect_dir = normalize(subtract(scale_vec(2*dot(N, V), N), V), true);
           var reflect_ray = { origin: P, dir: reflect_dir }; 
           //var scale_down = scale_vec(closest_intersection.ball.k_r, subtract([1, 1, 1], shadow_light));
@@ -202,6 +201,21 @@ Declare_Any_Class( "Ray_Tracer",
           reflect_light = scale_vec(closest_intersection.ball.k_r, reflect_light);
 
           color_loc = add(color_loc, reflect_light);
+
+
+          //refraction
+          var r = closest_intersection.ball.refract_index;
+          var l = normalize(ray.dir, true);
+          var c = -1*dot(N, l);
+          var refract_dir = normalize(add(scale_vec(r, l), scale_vec((r*c-Math.sqrt(1-r*r*(1-c*c))), N)), true);
+          var refract_ray = { origin: P, dir: refract_dir}; 
+
+          var refract_color_remain = scale_vec(closest_intersection.ball.k_refract, color_remaining);
+          var refract_light = this.trace(refract_ray, scale_vec(1, refract_color_remain), false).slice(0, 3);
+
+
+          //refract_light = vec3(0,0,0);
+          color_loc = add(color_loc, refract_light);
 
           return Color(color_loc[0], color_loc[1], color_loc[2], 1);
         }
