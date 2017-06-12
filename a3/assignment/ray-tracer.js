@@ -12,7 +12,7 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
         this.model_transform = mult(this.model_transform, scale( size[0], size[1], size[2] ) )
 
       },
-    'intersect'( ray, existing_intersection, minimum_dist )
+    'intersect'( ray, existing_intersection, minimum_dist)
       {
   // TODO:  Given a ray, check if this Ball is in its path.  Recieves as an argument a record of the nearest intersection found so far (a Ball pointer, a t distance
   //        value along the ray, and a normal), updates it if needed, and returns it.  Only counts intersections that are at least a given distance ahead along the ray.
@@ -29,12 +29,9 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
         
         if (B*B-A*C >= 0) {
         //two points of intersections
-          var t1 = -B/A+Math.sqrt(B*B-A*C)/A;
-          var t2 = -B/A-Math.sqrt(B*B-A*C)/A;
-		  
-		  //t1 = Math.abs(Math.sqrt(A) * t1);
-		  //t2 = Math.abs(Math.sqrt(A) * t2);
-		  
+          var t2 = -B/A+Math.sqrt(B*B-A*C)/A;
+          var t1 = -B/A-Math.sqrt(B*B-A*C)/A;
+
           if (t1 < minimum_dist || t1 > t2){ 
             t1=t2;
           }
@@ -43,16 +40,16 @@ Declare_Any_Class( "Ball",              // The following data members of a ball 
             return existing_intersection;
           } 
 
-
           existing_intersection.ball = this;
           existing_intersection.distance = t1;
           var point_intersect = add(S, scale_vec(t1,c));
           
           var temp = vec4(point_intersect[0], point_intersect[1], point_intersect[2], 0);
           var temp2 = normalize(mult_vec(transpose(inverse(this.model_transform)), temp), true);
+          
+        
           existing_intersection.normal =  vec4(temp2[0], temp2[1], temp2[2], 0);
           }
-        
         return existing_intersection;
 
       }
@@ -99,11 +96,11 @@ Declare_Any_Class( "Ray_Tracer",
     // TODO:  Map an (x,y) pixel to a corresponding xyz vector that reaches the near plane.  If correct, everything under the "background effects" menu will now work. 
   
 
-        alpha = ix/this.width; //scale on x 
-        beta = iy/this.height; //scale on y
+        var alpha = ix/this.width; //scale on x 
+        var beta = iy/this.height; //scale on y
 
-        x = this.left + alpha*(this.right - this.left)
-        y = this.bottom + beta*(this.top - this.bottom)
+        var x = this.left + alpha*(this.right - this.left);
+        var y = this.bottom + beta*(this.top - this.bottom);
 
        return vec4( x, y, -1*this.near, 0 );
       },
@@ -125,20 +122,20 @@ Declare_Any_Class( "Ray_Tracer",
         
 
         var closest_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null };    // An empty intersection object
+        
         for(let b of this.balls) {
-          b.intersect(ray, closest_intersection, 0.0001);
+          b.intersect(ray, closest_intersection, this.near);
         }
+
         /*
         if( !closest_intersection.ball ) return this.color_missed_ray( ray );
         else return closest_intersection.ball.color;
         */
-
         
         if(closest_intersection.ball){
-          //throw closest_intersection.normal;
+          //throw closest_intersection.ball
           var P = add(ray.origin, scale_vec(closest_intersection.distance, ray.dir));
           var color_loc = vec3(0, 0, 0);
-          //shadow light
 
           var light_ambient = scale_vec(closest_intersection.ball.k_a, closest_intersection.ball.color);
           var ambient_color = vec3(light_ambient[0], light_ambient[1], light_ambient[2]);
@@ -146,14 +143,24 @@ Declare_Any_Class( "Ray_Tracer",
           for(let l of this.lights) {
             var light_origin = l.position;
             var light_dir = vec4(light_origin[0]-P[0], light_origin[1]-P[1], light_origin[2]-P[2], 0);
-            var light_ray = { origin: light_origin, dir: light_dir };  
+            var light_ray = { origin: P, dir: light_dir };  
             var light_intersection = { distance: Number.POSITIVE_INFINITY, ball: null, normal: null };
             for(let b1 of this.balls) {
               b1.intersect(light_ray, light_intersection, 0.0001);
             }
-            if(!light_intersection.ball){
+                
+
+
+            if(add(ray.origin, scale_vec(light_intersection.distance, ray.dir)) == light_origin || !light_intersection.ball){
               //no intersections between P and the light sources
               var L = normalize(light_dir, true);
+              
+              /*
+              if(closest_intersection.distance < this.near)
+                var N = scale_vec(-1, closest_intersection.normal);
+              else
+                var N = closest_intersection.normal;
+              */
               var N = closest_intersection.normal;
               var R = normalize(subtract(scale_vec(2*dot(N, L), N), L), true);
               var V = normalize(scale_vec(-1, ray.dir), true);
@@ -172,17 +179,12 @@ Declare_Any_Class( "Ray_Tracer",
               color_loc = add(color_loc, add(diffuse_color, specular_color));
               }
             }
-
           color_loc = add(color_loc, ambient_color);
-          var ray_reflect = { origin: P, dir: normalize(subtract(scale_vec(2*dot(N, V), N), V), true)};
-          var color_reflect = this.trace(ray_reflect, color_remaining*closest_intersection.ball.k_r, false);
-
-          color_loc = add(color_loc, vec3(color_reflect[0], color_reflect[1], color_reflect[2]));
 
           return Color(color_loc[0], color_loc[1], color_loc[2], 1);
         }
         else return this.color_missed_ray( ray );
-
+        
 
 
           
